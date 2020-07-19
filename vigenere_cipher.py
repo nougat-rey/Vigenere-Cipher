@@ -26,40 +26,63 @@ def get_keystream(key, message_len):
     keystream+=key[0:remainder]
     return keystream
 
-def manager(msg, key, option):
-
-    #Need checks:
-
-    # Capital letters
-    # Dealing with spaces and symbols and non-alphanumeric input
-
+def encode(msg, key):
     matrix = generate_cipher_matrix()
     keystream = get_keystream(key, len(msg))
 
+    cipher = []
+    item = 0
+    while item < len(msg):
+        cipher.append(num_to_alpha(matrix
+            [alpha_to_num(keystream[item])-1]
+            [alpha_to_num(msg[item])-1]
+        ))
+        item+=1
+    return cipher
+
+def decode(cipher, key):
+    matrix = generate_cipher_matrix()
+    keystream = get_keystream(key, len(cipher))
+
+    msg = []
+    item = 0
+    while item < len(cipher):
+        #for each letter
+        row = 0
+        while row < 26:
+            if num_to_alpha(matrix[row][alpha_to_num(keystream[item])-1]) == cipher[item]:
+                msg.append(num_to_alpha(row+1))
+            row += 1
+        item += 1
+    return msg
+
+def manager(msg, key, option):
+
+    #Converting string to list to work with
+    msg = list(msg)
+
+    # Handling Capital letters
+    capital_letters = [] #index of capital letters
+    letter_index = 0
+    while letter_index < len(msg):
+        if msg[letter_index].isupper():
+            capital_letters.append(letter_index)
+            msg[letter_index] = msg[letter_index].lower()
+        letter_index+=1
+
+    # Dealing with spaces and symbols and non-alphanumeric input
+    # Create temporary msg without all of the spaces and symbols
+    # Add the alphanumeric values back in once done
+
     if option == "--encode":
-        cipher = ""
-        item = 0
-        while item < len(msg):
-            cipher+=num_to_alpha(matrix
-                [alpha_to_num(keystream[item])-1]
-                [alpha_to_num(msg[item])-1]
-            )
-            item+=1
-        return cipher
+        result = encode(msg, key)
 
     if option == "--decode":
-        cipher = msg
-        msg = ""
-        item = 0
-        while item < len(cipher):
-            #for each letter
-            row = 0
-            while row < 26:
-                if num_to_alpha(matrix[row][alpha_to_num(keystream[item])-1]) == cipher[item]:
-                    msg+=num_to_alpha(row+1)
-                row += 1
-            item += 1
-        return msg
+        result = decode(msg, key)
+
+    for letter in capital_letters:
+        result[letter] = result[letter].upper()
+    return "".join(result)
 
 def test():
     # Test Case 1 (simple encode)
@@ -70,7 +93,7 @@ def test():
         else:
             print("Test Case 1: Fail")
     except Exception as error:
-        print("Test Case 1: Fail - "+ error)
+        print("Test Case 1: Fail - "+ str(error))
 
     # Test Case 2 (simple decode)
     try:
@@ -80,13 +103,30 @@ def test():
         else:
             print("Test Case 2: Fail")
     except Exception as error:
-        print("Test Case 2: Fail - "+ error)
+        print("Test Case 2: Fail - "+ str(error))
 
     # Test Case 3 (encode with capital letters)
+    try:
+        cipher = manager("AttackAtDawn", "pie", "--encode")
+        if cipher == "PbxpkoPbHper":
+            print("Test Case 3: Pass")
+        else:
+            print("Test Case 3: Fail")
+    except Exception as error:
+        print("Test Case 3: Fail - "+ str(error))
 
     # Test Case 4 (encode with symbols)
 
     # Test Case 5 (decode with capital letters)
+    try:
+        msg = manager("PbxpkoPbHper", "pie", "--decode")
+        if msg == "AttackAtDawn":
+            print("Test Case 4: Pass")
+        else:
+            print("Test Case 4: Fail")
+    except Exception as error:
+        print("Test Case 4: Fail - "+ str(error))
+
 
     # Test Case 6 (decode with symbols)
 
